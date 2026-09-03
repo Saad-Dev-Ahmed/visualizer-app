@@ -329,11 +329,7 @@ function ProductTile({
             : "hover:border-muted-foreground/40"
         )}
       >
-        <ProductSwatch
-          product={product}
-          sizePx={256}
-          className="aspect-square w-full"
-        />
+        <ProductSwatch product={product} className="aspect-square w-full" />
         <span className="truncate text-xs font-semibold">{product.name}</span>
       </button>
       <FavouriteButton active={favourite} onClick={onToggleFavourite} />

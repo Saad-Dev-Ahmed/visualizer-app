@@ -57,7 +57,7 @@ function hexToRgb(hex: string): [number, number, number] {
 
 export function renderAggregate(
   product: Product,
-  { sizePx, pxPerMetre, seed }: AggregateOptions
+  { sizePx, pxPerMetre, seed }: AggregateOptions,
 ): ImageData {
   const N = sizePx;
   const rand = mulberry32(seed ?? hashString(product.id));
@@ -83,7 +83,8 @@ export function renderAggregate(
   }
   const pickStone = (r: number) => {
     const t = r * total;
-    for (let i = 0; i < cumulative.length; i++) if (t <= cumulative[i]) return i;
+    for (let i = 0; i < cumulative.length; i++)
+      if (t <= cumulative[i]) return i;
     return cumulative.length - 1;
   };
 
@@ -106,8 +107,12 @@ export function renderAggregate(
 
   // Light comes from the upper left and slightly toward the viewer, matching
   // how the shading transfer treats the photograph.
-  const LX = -0.42, LY = -0.52, LZ = 0.744;
-  const HX = -0.27, HY = -0.33, HZ = 0.904; // half-vector for the specular lobe
+  const LX = -0.42,
+    LY = -0.52,
+    LZ = 0.744;
+  const HX = -0.27,
+    HY = -0.33,
+    HZ = 0.904; // half-vector for the specular lobe
   const spec = product.gloss;
 
   const radius = cell * 0.72; // dome radius, slightly larger than a cell
@@ -122,14 +127,18 @@ export function renderAggregate(
     for (let x = 0; x < N; x++) {
       const cx0 = Math.floor(x / cell);
 
-      let best = Infinity, second = Infinity, bestI = 0, bdx = 0, bdy = 0;
+      let best = Infinity,
+        second = Infinity,
+        bestI = 0,
+        bdx = 0,
+        bdy = 0;
       for (let oy = -1; oy <= 1; oy++) {
         const gy = (cy0 + oy + cells) % cells;
         // Wrap offset so distance is measured across the tile seam correctly.
-        const wy = (cy0 + oy) < 0 ? -N : (cy0 + oy) >= cells ? N : 0;
+        const wy = cy0 + oy < 0 ? -N : cy0 + oy >= cells ? N : 0;
         for (let ox = -1; ox <= 1; ox++) {
           const gx = (cx0 + ox + cells) % cells;
-          const wx = (cx0 + ox) < 0 ? -N : (cx0 + ox) >= cells ? N : 0;
+          const wx = cx0 + ox < 0 ? -N : cx0 + ox >= cells ? N : 0;
           const i = gy * cells + gx;
           const dx = sx[i] + wx - x;
           const dy = sy[i] + wy - y;
@@ -154,7 +163,9 @@ export function renderAggregate(
       const ang = Math.atan2(bdy, bdx);
       const seedv = sv[bestI];
       const wobble =
-        1 + 0.17 * Math.sin(ang * 5 + seedv * 9) + 0.1 * Math.sin(ang * 3 - seedv * 5);
+        1 +
+        0.17 * Math.sin(ang * 5 + seedv * 9) +
+        0.1 * Math.sin(ang * 3 - seedv * 5);
 
       // Dome normal: flat across the crown, falling away toward the rim. The
       // lateral term is damped — a fully spherical normal reads as ball
@@ -210,31 +221,6 @@ export function getFloorTile(product: Product): ImageData {
     floorCache.set(product.id, hit);
   }
   return hit;
-}
-
-const swatchCache = new Map<string, string>();
-
-/**
- * Close-up swatch for the product list — roughly a 90mm crop, which is the
- * scale a physical sample board is photographed at.
- */
-export function getSwatchDataUrl(product: Product, sizePx = 128): string {
-  const key = `${product.id}@${sizePx}`;
-  const hit = swatchCache.get(key);
-  if (hit) return hit;
-
-  const data = renderAggregate(product, {
-    sizePx,
-    pxPerMetre: sizePx / 0.09,
-    seed: hashString(product.id) ^ 0x5bf03635,
-  });
-  const canvas = document.createElement("canvas");
-  canvas.width = sizePx;
-  canvas.height = sizePx;
-  canvas.getContext("2d")!.putImageData(data, 0, 0);
-  const url = canvas.toDataURL("image/png");
-  swatchCache.set(key, url);
-  return url;
 }
 
 /** Warms the floor-tile cache off the critical path. */

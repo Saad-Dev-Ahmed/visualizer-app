@@ -44,11 +44,7 @@ export function ProductDetailsSheet({
             </SheetHeader>
 
             <div className="flex flex-col gap-6 overflow-y-auto px-4">
-              <ProductSwatch
-                product={product}
-                sizePx={512}
-                className="aspect-[4/3] w-full"
-              />
+              <ProductSwatch product={product} className="aspect-[4/3] w-full" />
 
               <p className="text-sm text-muted-foreground">
                 {product.description}

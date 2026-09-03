@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRightIcon, TriangleAlertIcon } from "lucide-react";
@@ -14,14 +15,14 @@ import { saveScene } from "@/lib/session";
 
 export function RoomPicker() {
   const router = useRouter();
-  const [busy, setBusy] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const go = React.useCallback(() => {
+  const go = useCallback(() => {
     router.push("/visualizer");
   }, [router]);
 
-  const handleFile = React.useCallback(
+  const handleFile = useCallback(
     async (file: File) => {
       setError(null);
       setBusy(true);
@@ -41,7 +42,7 @@ export function RoomPicker() {
     [go]
   );
 
-  const handleMobilePhoto = React.useCallback(
+  const handleMobilePhoto = useCallback(
     async (dataUrl: string) => {
       setBusy(true);
       try {
@@ -66,10 +67,10 @@ export function RoomPicker() {
   };
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-14">
+    <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
       {/* Bring your own photo */}
       <section className="flex flex-col gap-5">
-        <h2 className="text-2xl font-bold tracking-tight">
+        <h2 className="text-2xl font-bold tracking-tight capitalize">
           See products <span className="text-warm">in your room</span>
         </h2>
 
@@ -89,7 +90,7 @@ export function RoomPicker() {
 
       {/* Or start from one of ours */}
       <section className="flex flex-col gap-5">
-        <h2 className="text-2xl font-bold tracking-tight text-muted-foreground">
+        <h2 className="text-2xl font-bold tracking-tight text-muted-foreground capitalize">
           or try our demo rooms
         </h2>
 
@@ -101,7 +102,7 @@ export function RoomPicker() {
                 onClick={() => pickDemo(scene.id)}
                 className="group flex w-full flex-col gap-2 rounded-xl text-left focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
               >
-                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-muted ring-1 ring-border transition group-hover:ring-2 group-hover:ring-brand">
+                <div className="relative aspect-3/4 w-full overflow-hidden rounded-xl bg-muted ring-1 ring-border transition group-hover:ring-2 group-hover:ring-brand">
                   <Image
                     src={scene.photo}
                     alt={scene.caption}
@@ -109,7 +110,7 @@ export function RoomPicker() {
                     sizes="(min-width: 1024px) 18vw, 40vw"
                     className="object-cover transition duration-300 group-hover:scale-[1.03]"
                   />
-                  <span className="absolute inset-x-0 bottom-0 flex translate-y-2 items-center gap-1 bg-gradient-to-t from-black/70 to-transparent p-3 text-xs font-medium text-white opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
+                  <span className="absolute inset-x-0 bottom-0 flex translate-y-2 items-center gap-1 bg-linear-to-t from-black/70 to-transparent p-3 text-xs font-medium text-white opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
                     Visualize <ArrowRightIcon className="size-3" />
                   </span>
                 </div>

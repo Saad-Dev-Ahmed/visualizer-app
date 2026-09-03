@@ -10,9 +10,9 @@
 
 Two things settled since the architecture remarks, both worth recording:
 
-1. **Stone reference images resolve most of the colour-fidelity objection (§3 of the review).** Passing the actual stone photograph as a reference input is a far stronger constraint than any text prompt. `gemini-3.1-flash-image` is documented as handling *"up to 10 images of objects with high-fidelity"* and *"excelling at multiple reference image processing and consistency"* (`google-gemini-image-generation.md` §397–409). This makes the generative path commercially viable in a way that prompt-only generation was not. **The reference images are worth building properly — they are the fidelity control.**
+1. **Stone reference images resolve most of the colour-fidelity objection (§3 of the review).** Passing the actual stone photograph as a reference input is a far stronger constraint than any text prompt. `gemini-3.1-flash-image` is documented as handling _"up to 10 images of objects with high-fidelity"_ and _"excelling at multiple reference image processing and consistency"_ (`google-gemini-image-generation.md` §397–409). This makes the generative path commercially viable in a way that prompt-only generation was not. **The reference images are worth building properly — they are the fidelity control.**
 
-2. **The procedural renderer becomes the instant preview, not a competitor.** This directly answers the "proper loader with fallback image" requirement: the WebGL render appears in ~0 ms on swatch click, and the Gemini result cross-fades over it when ready. The user never sees a spinner over an empty canvas, and if generation fails or times out, the procedural render *is* the fallback — already correct in colour, already on screen.
+2. **The procedural renderer becomes the instant preview, not a competitor.** This directly answers the "proper loader with fallback image" requirement: the WebGL render appears in ~0 ms on swatch click, and the Gemini result cross-fades over it when ready. The user never sees a spinner over an empty canvas, and if generation fails or times out, the procedural render _is_ the fallback — already correct in colour, already on screen.
 
 Both paths are built. Neither is wasted.
 
@@ -32,13 +32,13 @@ So a Cloudinary URL cannot be handed to Gemini directly — your server would ha
 
 ### 1.2 Two assets, two jobs — do not conflate them
 
-| | UI swatch chip | Gemini reference texture |
-|---|---|---|
-| Consumed by | Browser, in the sidebar | Server only, inside `/api/render` |
-| Size | 256×256 | **1024×1024** |
-| Format | WebP | JPEG q92 or PNG |
-| Location | `public/stones/` | `assets/stones/` |
-| Publicly downloadable | Yes (fine) | No |
+|                       | UI swatch chip          | Gemini reference texture          |
+| --------------------- | ----------------------- | --------------------------------- |
+| Consumed by           | Browser, in the sidebar | Server only, inside `/api/render` |
+| Size                  | 256×256                 | **1024×1024**                     |
+| Format                | WebP                    | JPEG q92 or PNG                   |
+| Location              | `public/stones/`        | `assets/stones/`                  |
+| Publicly downloadable | Yes (fine)              | No                                |
 
 Keeping the high-quality masters out of `public/` matters for a second reason beyond tidiness: that is your product photography, and `public/` makes it a public download.
 
@@ -72,17 +72,17 @@ Your saved `google-gemini-image-understanding.md` §832 gives the tokenisation r
 
 Working that through for a square texture:
 
-| Reference size | Crop unit | Tiles | Tokens | Verdict |
-|---|---|---|---|---|
-| 384×384 | — | flat rate | **258** | Cheapest, but too few stones legible for a 1–3 mm blend |
-| 512×512 | 341 | 2×2 | 1032 | Same cost as 1024, less detail |
-| 768×768 | 512 | 2×2 | 1032 | Same cost as 1024, less detail |
-| **1024×1024** | 682 | 2×2 | **1032** | **Best detail available in this cost bucket** |
-| 2048×2048 | 1365 | 2×2 | 1032 | No extra cost, but no benefit — resized before tiling |
+| Reference size | Crop unit | Tiles     | Tokens   | Verdict                                                 |
+| -------------- | --------- | --------- | -------- | ------------------------------------------------------- |
+| 384×384        | —         | flat rate | **258**  | Cheapest, but too few stones legible for a 1–3 mm blend |
+| 512×512        | 341       | 2×2       | 1032     | Same cost as 1024, less detail                          |
+| 768×768        | 512       | 2×2       | 1032     | Same cost as 1024, less detail                          |
+| **1024×1024**  | 682       | 2×2       | **1032** | **Best detail available in this cost bucket**           |
+| 2048×2048      | 1365      | 2×2       | 1032     | No extra cost, but no benefit — resized before tiling   |
 
 **The jump is between 384 and 512, not between 768 and 1024.** Once you are paying 1032 tokens you may as well have the detail, so **1024×1024** is the answer. At roughly 1000 tokens per reference this is negligible next to the generated image itself.
 
-*(Arithmetic derived from the doc's own "rough formula" — worth confirming against a real `countTokens` call in Day 1, it takes two minutes.)*
+_(Arithmetic derived from the doc's own "rough formula" — worth confirming against a real `countTokens` call in Day 1, it takes two minutes.)_
 
 ### 1.5 What the reference photograph must look like — this matters more than resolution
 
@@ -133,7 +133,9 @@ export async function stoneReferenceBase64(id: string): Promise<string> {
   const asset = STONE_ASSETS[id];
   if (!asset) throw new Error(`No reference image for stone "${id}"`);
 
-  const bytes = await readFile(path.join(process.cwd(), "assets/stones", asset.file));
+  const bytes = await readFile(
+    path.join(process.cwd(), "assets/stones", asset.file),
+  );
   const encoded = bytes.toString("base64");
   cache.set(id, encoded);
   return encoded;
@@ -141,9 +143,11 @@ export async function stoneReferenceBase64(id: string): Promise<string> {
 ```
 
 > **⚠ Deployment gotcha — this will bite you on the first deploy.** Files outside `public/` are not automatically traced into a serverless bundle. Add to `next.config.ts`:
+>
 > ```ts
 > outputFileTracingIncludes: { "/api/render": ["./assets/stones/**"] }
 > ```
+>
 > Symptom without it: works perfectly on `next dev`, throws `ENOENT` in production. Verify on a preview deploy during Day 1, not on Day 5.
 
 ### 1.7 A parity test worth writing on Day 1
@@ -198,7 +202,9 @@ So: **no new dependency, no new infrastructure, and one fallback branch.**
 **Switch `loadImage()` to `createImageBitmap`.** Three wins over `new Image()` + object URL: it decodes off the main thread, it works on the `File` directly, and — the one that matters — it takes an explicit orientation flag:
 
 ```ts
-const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+const bitmap = await createImageBitmap(file, {
+  imageOrientation: "from-image",
+});
 ```
 
 **Raise `MAX_UPLOAD_BYTES`.** 20 MB rejects large HEIC bursts and most TIFFs. 50 MB is a reasonable ceiling now that step 2 exists.
@@ -207,7 +213,7 @@ const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" })
 
 Phone photos carry an EXIF orientation flag. A portrait photo is very often stored as landscape bytes plus "rotate 90°".
 
-In a normal gallery app, getting this wrong means a sideways picture — annoying, obvious, easy to spot. **In your pipeline it means something worse and much harder to diagnose:** Gemini returns the mask polygon and quad in the coordinate space of *the bytes you sent it*. If the browser displays the photo auto-rotated but you sent the unrotated bytes, the mask arrives rotated 90° relative to what the user sees. The surface renders in the wrong place, the perspective is nonsense, and nothing in the response looks wrong.
+In a normal gallery app, getting this wrong means a sideways picture — annoying, obvious, easy to spot. **In your pipeline it means something worse and much harder to diagnose:** Gemini returns the mask polygon and quad in the coordinate space of _the bytes you sent it_. If the browser displays the photo auto-rotated but you sent the unrotated bytes, the mask arrives rotated 90° relative to what the user sees. The surface renders in the wrong place, the perspective is nonsense, and nothing in the response looks wrong.
 
 **Fix it once, at the edge:** normalise orientation during `prepareUpload()` so the JPEG that leaves the browser is already visually upright, with the flag stripped. Every downstream stage — hash, Gemini, mask, renderer, Cloudinary — then shares one coordinate space. `imageOrientation: "from-image"` plus the canvas re-encode does this; Cloudinary auto-orients on upload for the step-2 path.
 
@@ -217,13 +223,13 @@ Add a portrait phone photo with a non-trivial orientation flag to the Day 1 benc
 
 Honest boundary, so nobody promises it:
 
-| Format | Status |
-|---|---|
-| JPEG, PNG, WebP, GIF, BMP, AVIF | Client decode, everywhere |
-| HEIC / HEIF | Client on Safari; Cloudinary fallback elsewhere |
-| TIFF, PSD | Cloudinary fallback |
+| Format                              | Status                                                                                                                                                                                                           |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JPEG, PNG, WebP, GIF, BMP, AVIF     | Client decode, everywhere                                                                                                                                                                                        |
+| HEIC / HEIF                         | Client on Safari; Cloudinary fallback elsewhere                                                                                                                                                                  |
+| TIFF, PSD                           | Cloudinary fallback                                                                                                                                                                                              |
 | **Camera RAW** (CR2, NEF, ARW, DNG) | **Not supported.** Every RAW contains a full-size embedded JPEG preview that could be extracted, but nobody photographs their driveway in RAW for this. Reject with a clear message rather than building for it. |
-| SVG | Reject deliberately — vector input is meaningless here and SVG upload is an XSS vector. |
+| SVG                                 | Reject deliberately — vector input is meaningless here and SVG upload is an XSS vector.                                                                                                                          |
 
 Everything above the RAW line is realistic consumer input. That is what "any format" should mean in practice.
 
@@ -360,11 +366,13 @@ model Render {
 ```
 
 **Cloudinary:**
+
 - `public_id` = the render cache key. Existence checks become a URL fetch, uploads are idempotent with `overwrite: false`.
 - Sign uploads **server-side only**. The secret never reaches the browser.
-- Store `secure_url` *and* `version`; deliver with `f_auto,q_auto`.
+- Store `secure_url` _and_ `version`; deliver with `f_auto,q_auto`.
 
 **Request flow in `/api/render`:**
+
 ```
 hash photo → analysis cache hit? → else analyze, store
            → render cache hit?   → return secure_url  ← the common path
@@ -391,11 +399,11 @@ idle → uploading → analysing → ready ⇄ swatch click
                               cached hit? → skip straight to result
 ```
 
-- **Analysing is the only unavoidable wait,** and it happens once per photo. Label the phases: *"Finding the surface…"* → *"Measuring perspective…"* Same duration, reads as progress rather than as broken.
+- **Analysing is the only unavoidable wait,** and it happens once per photo. Label the phases: _"Finding the surface…"_ → _"Measuring perspective…"_ Same duration, reads as progress rather than as broken.
 - **The procedural render is the fallback image.** On swatch click it appears immediately in the right colours. Generation improves it; failure leaves it standing. No spinner over an empty canvas, ever.
 - **Cross-fade, don't cut.** ~250 ms. `visualizer-shell.tsx:186` already keeps the previous texture during a blend load — extend that pattern.
 - **Cache hits skip the loader entirely.** Show the cached result immediately. Most clicks after launch will be cache hits, and they should feel like it.
-- **Confidence-driven fallback ladder:** AI mask → last good mask for this photo → `DEFAULT_UPLOAD_QUAD` with handles pre-opened → demo scene with an explanation. Below the Day 2 threshold, auto-open the handles with *"Drag the corners to match your driveway."*
+- **Confidence-driven fallback ladder:** AI mask → last good mask for this photo → `DEFAULT_UPLOAD_QUAD` with handles pre-opened → demo scene with an explanation. Below the Day 2 threshold, auto-open the handles with _"Drag the corners to match your driveway."_
 - **Reject non-property photos** on `sceneType: "unsupported"` with a friendly retry.
 - **Debounce swatch clicks** ~400 ms. A user clicking through ten stones should not fire ten generations for nine surfaces they never looked at. This is a real cost line, not a nicety.
 
@@ -423,20 +431,20 @@ DATABASE_URL
 
 ## Guardrails
 
-| Thing | Guard |
-|---|---|
-| Cost runaway | Debounce clicks; rate-limit `/api/render` per session; log every uncached generation with its key |
-| Prompt drift | `promptVersion` in the cache key, bumped on every prompt edit |
-| Colour drift | ΔE check from Day 3, run over the benchmark set in CI |
-| Deploy break | `outputFileTracingIncludes` verified on preview during Day 1 |
-| Privacy | Retention decision settled before the Day 4 schema |
-| Watermark | Every generated image carries a SynthID watermark. Confirm that is acceptable for customer-facing quotes before launch. |
+| Thing        | Guard                                                                                                                   |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Cost runaway | Debounce clicks; rate-limit `/api/render` per session; log every uncached generation with its key                       |
+| Prompt drift | `promptVersion` in the cache key, bumped on every prompt edit                                                           |
+| Colour drift | ΔE check from Day 3, run over the benchmark set in CI                                                                   |
+| Deploy break | `outputFileTracingIncludes` verified on preview during Day 1                                                            |
+| Privacy      | Retention decision settled before the Day 4 schema                                                                      |
+| Watermark    | Every generated image carries a SynthID watermark. Confirm that is acceptable for customer-facing quotes before launch. |
 
 ---
 
 ## Open questions to settle before Day 4
 
-1. **Retention** — store uploads, or only derived analysis and renders? Blocks the schema. *(Recommendation: derived only.)*
+1. **Retention** — store uploads, or only derived analysis and renders? Blocks the schema. _(Recommendation: derived only.)_
 2. **How many SKUs get reference photography for v1?** All of them, or the top ten by sales with procedural-only for the tail? Affects Day 1 scope directly.
 3. **Does the SynthID watermark matter** for a customer-facing quotation image?
 

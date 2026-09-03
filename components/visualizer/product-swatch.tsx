@@ -1,30 +1,26 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useSwatch } from "@/components/visualizer/use-swatch";
+import { stonePhoto } from "@/lib/stones/manifest";
 import type { Product } from "@/lib/products";
 
 export function ProductSwatch({
   product,
   className,
-  sizePx = 128,
 }: {
   product: Product;
   className?: string;
-  sizePx?: number;
 }) {
-  const url = useSwatch(product, sizePx);
-
-  if (!url) return <Skeleton className={cn("rounded-md", className)} />;
-
   return (
+    // Every use is a few dozen pixels wide, so next/image buys nothing here.
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={url}
+      src={stonePhoto(product.id)}
       alt={`${product.name} aggregate`}
       className={cn("rounded-md object-cover", className)}
       draggable={false}
+      loading="lazy"
+      decoding="async"
     />
   );
 }
