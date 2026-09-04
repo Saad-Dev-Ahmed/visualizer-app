@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { FileImageIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -13,6 +12,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { useRef, useState } from "react";
 
 export function UploadDropzone({
   onFile,
@@ -21,11 +21,11 @@ export function UploadDropzone({
   onFile: (file: File) => void;
   busy?: boolean;
 }) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const [dragging, setDragging] = React.useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
   // Drag events fire for every child element, so nesting is counted rather
   // than toggled — otherwise the highlight flickers as the pointer moves.
-  const depth = React.useRef(0);
+  const depth = useRef(0);
 
   const pick = () => inputRef.current?.click();
 
@@ -80,7 +80,7 @@ export function UploadDropzone({
         }}
       />
 
-      <Empty className="min-h-[19rem]">
+      <Empty className="min-h-76">
         <EmptyHeader>
           <EmptyMedia variant="icon" className="size-16">
             {busy ? (

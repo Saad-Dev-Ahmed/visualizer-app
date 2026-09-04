@@ -1,6 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useRef, useState } from "react";
+
 import QRCode from "qrcode";
 import { CheckIcon, SmartphoneIcon } from "lucide-react";
 
@@ -18,16 +19,16 @@ export function MobileUploadCard({
 }: {
   onPhoto: (dataUrl: string) => void;
 }) {
-  const [qr, setQr] = React.useState<string | null>(null);
-  const [received, setReceived] = React.useState(false);
+  const [qr, setQr] = useState<string | null>(null);
+  const [received, setReceived] = useState(false);
   // The polling loop must stay mounted for the life of the card, so it reads
   // the latest callback through a ref rather than restarting on every render.
-  const onPhotoRef = React.useRef(onPhoto);
-  React.useEffect(() => {
+  const onPhotoRef = useRef(onPhoto);
+  useEffect(() => {
     onPhotoRef.current = onPhoto;
   }, [onPhoto]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const id = newSessionId();
     const url = `${window.location.origin}/m/${id}`;
     let cancelled = false;
