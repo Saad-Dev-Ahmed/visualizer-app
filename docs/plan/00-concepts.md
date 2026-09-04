@@ -32,11 +32,11 @@ holding onto:
 > specific weights, `grainMm: 2.1`, binder `#2c2015`, gloss `0.32`
 > ([lib/products.ts:41-60](../../lib/products.ts#L41-L60)). A customer approves a
 > picture and then takes delivery of several tonnes of that material. A diffusion
-> model asked for "Arizona golden gravel" returns *a* golden gravel — a plausible
+> model asked for "Arizona golden gravel" returns _a_ golden gravel — a plausible
 > one from its training distribution, drifting between generations and between
 > photos. "The AI made up the colour" is not a defence that survives a chargeback.
 >
-> Way B's colours come out of the SKU record. It is *more* accurate than the AI
+> Way B's colours come out of the SKU record. It is _more_ accurate than the AI
 > for this specific job. That is an unusual position to be in, and switching to
 > Way A would give it away.
 
@@ -47,11 +47,11 @@ holding onto:
 The shader in `surface-renderer.ts` needs three inputs per scene that the
 photograph does not carry:
 
-| Input | What it is | Demo scene | Uploaded photo, today |
-| --- | --- | --- | --- |
-| **mask** | A greyscale image: white where the surface may be replaced, black everywhere else | Hand-painted PNG, `public/demo/driveway-mask.png` | `maskFromQuad()` — a blurred trapezoid ([lib/image.ts:62](../../lib/image.ts#L62)) |
-| **quad** | Four normalised points describing a rectangle *lying on the ground plane*, as seen by this camera. Far-left, far-right, near-right, near-left | Hand-tuned per scene ([lib/scenes.ts:31](../../lib/scenes.ts#L31)) | `DEFAULT_UPLOAD_QUAD` — a fixed guess ([lib/scenes.ts:82](../../lib/scenes.ts#L82)) |
-| **planeMetres** | How big that rectangle is in real life, e.g. `[3.72, 3.96]` | Estimated per scene by eye | `[4, 4]`, a constant |
+| Input           | What it is                                                                                                                                    | Demo scene                                                         | Uploaded photo, today                                                               |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| **mask**        | A greyscale image: white where the surface may be replaced, black everywhere else                                                             | Hand-painted PNG, `public/demo/driveway-mask.png`                  | `maskFromQuad()` — a blurred trapezoid ([lib/image.ts:62](../../lib/image.ts#L62))  |
+| **quad**        | Four normalised points describing a rectangle _lying on the ground plane_, as seen by this camera. Far-left, far-right, near-right, near-left | Hand-tuned per scene ([lib/scenes.ts:31](../../lib/scenes.ts#L31)) | `DEFAULT_UPLOAD_QUAD` — a fixed guess ([lib/scenes.ts:82](../../lib/scenes.ts#L82)) |
+| **planeMetres** | How big that rectangle is in real life, e.g. `[3.72, 3.96]`                                                                                   | Estimated per scene by eye                                         | `[4, 4]`, a constant                                                                |
 
 And here is what goes wrong when each is wrong:
 
@@ -64,8 +64,8 @@ And here is what goes wrong when each is wrong:
   looking obviously broken.
 
 **That is the entire bug.** Uploads do not break because there is no AI in the
-loop. They break because *nothing computes a mask, a quad, or a scale for an
-arbitrary photograph.* Everything downstream is fine.
+loop. They break because _nothing computes a mask, a quad, or a scale for an
+arbitrary photograph._ Everything downstream is fine.
 
 ---
 
@@ -91,7 +91,7 @@ distance it was shot at.
 ### 3b. The homography — `lib/render/homography.ts`
 
 Four points on a plane, plus their four positions in the image, uniquely determine
-a 3×3 projective matrix. Invert it and you can ask, for *any* pixel in the photo,
+a 3×3 projective matrix. Invert it and you can ask, for _any_ pixel in the photo,
 "where on the ground is this?" — in metres.
 
 That inverse is `u_hinv`, and the shader uses it on line 62 of the fragment
@@ -104,14 +104,14 @@ ground position, so the mask is forced to zero there — that is the guard on
 This is the clever part and it is only about eight lines of GLSL
 ([surface-renderer.ts:89-101](../../lib/render/surface-renderer.ts#L89-L101)):
 
-1. Downsample the photograph hard. What survives is *only* the light — the sun,
+1. Downsample the photograph hard. What survives is _only_ the light — the sun,
    the hedge shadow, the fall-off toward the house. That is `u_light`.
 2. For each pixel, compute `ratio = luminance(light) / refLuma`, where `refLuma`
    is the mean brightness of the original surface. Above 1 means "this spot was
    brighter than average", below 1 means "in shadow".
 3. Multiply the synthetic aggregate by that ratio. The new surface inherits the
    original photograph's exact lighting.
-4. Carry the *chromaticity* across too — `tint = light / luminance(light)` — so
+4. Carry the _chromaticity_ across too — `tint = light / luminance(light)` — so
    warm sun stays warm and cool shade stays cool.
 5. Add back the high-frequency detail the downsample destroyed
    (`detail = luma(photo) - luma(light)`): crisp leaf-shadow edges, tyre marks,
@@ -169,13 +169,13 @@ One call gets you all three missing numbers plus more:
 Three fields deserve special attention:
 
 - **`occluders`** is what fixes the most visible failure. Final mask =
-  `surface MINUS occluders`. This is the difference between paving *around* a
-  parked car and paving *over* it. The model will not volunteer them — ask.
+  `surface MINUS occluders`. This is the difference between paving _around_ a
+  parked car and paving _over_ it. The model will not volunteer them — ask.
 - **`planeMetres`** is the scale trick. Vision models are poor at absolute
   distance in the abstract but reason well about known object sizes. Instruct it
   to anchor on something measurable — a car is ~1.8 m wide, a UK brick course
-  ~215 mm, a standard door ~2.0 m, a paving slab ~450 mm — and to *report which
-  anchor it used* in `scaleAnchor`. That field is your debugging handle the day
+  ~215 mm, a standard door ~2.0 m, a paving slab ~450 mm — and to _report which
+  anchor it used_ in `scaleAnchor`. That field is your debugging handle the day
   grain size comes out wrong.
 - **`lighting`** maps onto shader uniforms that are hand-tuned constants today
   (`u_shading`, `u_colorCast`).
@@ -185,7 +185,7 @@ argument in a sentence.
 
 ### 4b. `gemini-3.1-flash-image` (Nano Banana 2) — image **generation**
 
-Photo in, photo out. Genuinely impressive, and it *does* have a place — but not in
+Photo in, photo out. Genuinely impressive, and it _does_ have a place — but not in
 the main loop, for three reasons:
 
 1. **~30× the cost.** A 30-swatch browse is ~30 generations (≈$2.40 at $0.08) vs
@@ -195,7 +195,7 @@ the main loop, for three reasons:
 3. **Colour drift** — §1 above.
 
 There is also a hard structural reason it cannot be the masking strategy. Nano
-Banana "inpainting" is *conversational*: you describe the region in prose and the
+Banana "inpainting" is _conversational_: you describe the region in prose and the
 model decides the boundary internally. **You cannot hand it a pixel mask, and you
 cannot get its mask back out.** So there is nothing to cache, nothing to render
 into, and nothing for the user to drag and correct when it gets the boundary
@@ -205,12 +205,12 @@ that path.
 > The PRDs specify `MASK_MODE_SEMANTIC` and `MaskReferenceImage` for this. **Those
 > parameters do not exist in the Gemini API.** They belong to the older Imagen
 > editing API on Vertex AI. Code written against them will not run. Same for
-> "Imagen 3 as the foundational model" — the saved docs open with *Migration to
-> Nano Banana* and mark Imagen 4 deprecated.
+> "Imagen 3 as the foundational model" — the saved docs open with _Migration to
+> Nano Banana_ and mark Imagen 4 deprecated.
 
 **Where generation genuinely earns its place** (this is phase 5): the user
 explores freely and instantly with the procedural renderer, picks one blend, then
-presses a button that spends *one* generation to produce a polished, shareable,
+presses a button that spends _one_ generation to produce a polished, shareable,
 photoreal image. One call per session, at maximum intent. And the input to that
 call includes **the actual photograph of the stone** as a reference image, which
 constrains the colour drift far more tightly than any prompt could — the model is
@@ -292,8 +292,8 @@ documented as handling up to 10 reference images with high fidelity.
 
 Note the shape of it: **the expensive artifact is the analysis, and it is tiny.**
 One row of polygons and floats serves the entire catalogue for that photograph.
-Under the rejected per-click design you would need one row *per photo × per
-product* — roughly 30× the rows for a fraction of the hit rate.
+Under the rejected per-click design you would need one row _per photo × per
+product_ — roughly 30× the rows for a fraction of the hit rate.
 
 ---
 
@@ -306,7 +306,7 @@ photo is very often landscape bytes plus "rotate 90°".
 
 In a gallery app, mishandling this means a sideways picture — obvious, easy to
 spot. **Here it is worse and much harder to diagnose:** Gemini returns polygons in
-the coordinate space of *the bytes you sent it*. If the browser displays the photo
+the coordinate space of _the bytes you sent it_. If the browser displays the photo
 auto-rotated but you sent unrotated bytes, the mask arrives rotated 90° relative
 to what the user sees. The surface lands in the wrong place, the perspective is
 nonsense, and **nothing in the API response looks wrong.**
@@ -323,22 +323,22 @@ will not be pixel-perfect on a curved path with planting spilling over the edge.
 This is why the drag handles stay. **The AI proposes, the user adjusts.** That is
 also better product design than a black box: a wrong result becomes recoverable in
 two seconds instead of ending the session. Below a confidence threshold, open the
-handles automatically with *"Drag the corners to match your driveway"* — the user
+handles automatically with _"Drag the corners to match your driveway"_ — the user
 fixes it and never learns the model was unsure.
 
 ---
 
 ## 7. Vocabulary
 
-| Term | Means |
-| --- | --- |
-| **Blend / SKU / product** | One aggregate recipe in `lib/products.ts`. Arizona, Eden, … |
-| **Quad** | Four normalised image points describing a rectangle lying on the ground plane. Corners often sit *outside* the frame on purpose — it describes the whole plane, not the visible surface |
-| **Homography** | 3×3 projective matrix mapping the ground plane to the image, and back |
-| **Mask** | Greyscale canvas: white = replaceable surface, black = leave alone. 3 px feather so the edge is not a decal |
-| **Occluder** | Something standing *on* the surface that must be subtracted from the mask: car, planter, bin, step |
-| **planeMetres** | Real-world size of the quad, in metres. Sets grain scale |
-| **Understanding** | `gemini-3.7-flash`. Image in, JSON out |
-| **Generation / Nano Banana** | `gemini-3.1-flash-image`. Image in, image out |
-| **Procedural render** | The current WebGL path. Instant, free, colour-exact. Also the fallback for every failure in phases 5–6 |
-| **imageHash** | `sha256` of the *normalised* bytes, so the same photo hashes identically across devices. The cache key for everything |
+| Term                         | Means                                                                                                                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Blend / SKU / product**    | One aggregate recipe in `lib/products.ts`. Arizona, Eden, …                                                                                                                             |
+| **Quad**                     | Four normalised image points describing a rectangle lying on the ground plane. Corners often sit _outside_ the frame on purpose — it describes the whole plane, not the visible surface |
+| **Homography**               | 3×3 projective matrix mapping the ground plane to the image, and back                                                                                                                   |
+| **Mask**                     | Greyscale canvas: white = replaceable surface, black = leave alone. 3 px feather so the edge is not a decal                                                                             |
+| **Occluder**                 | Something standing _on_ the surface that must be subtracted from the mask: car, planter, bin, step                                                                                      |
+| **planeMetres**              | Real-world size of the quad, in metres. Sets grain scale                                                                                                                                |
+| **Understanding**            | `gemini-3.7-flash`. Image in, JSON out                                                                                                                                                  |
+| **Generation / Nano Banana** | `gemini-3.1-flash-image`. Image in, image out                                                                                                                                           |
+| **Procedural render**        | The current WebGL path. Instant, free, colour-exact. Also the fallback for every failure in phases 5–6                                                                                  |
+| **imageHash**                | `sha256` of the _normalised_ bytes, so the same photo hashes identically across devices. The cache key for everything                                                                   |

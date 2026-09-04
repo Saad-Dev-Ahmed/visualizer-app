@@ -1,29 +1,27 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import { ArrowRightIcon, TriangleAlertIcon } from 'lucide-react'
+import Image from "next/image";
+import { ArrowRightIcon, TriangleAlertIcon } from "lucide-react";
 
-import { DEMO_SCENES } from '@/lib/scenes'
+import { DEMO_SCENES } from "@/lib/scenes";
 
-import { UploadDropzone } from '../picker/upload-dropzone'
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
-import { MobileUploadCard } from '../picker/mobile-upload-card'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { prepareUpload, UploadError } from '@/lib/image'
-import { saveScene } from '@/lib/session'
+import { UploadDropzone } from "../picker/upload-dropzone";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { MobileUploadCard } from "../picker/mobile-upload-card";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { prepareUpload, UploadError } from "@/lib/image";
+import { saveScene } from "@/lib/session";
 
-export default function StudioShell() {
-
+export default function StudioImagePicker() {
   const router = useRouter();
 
-  const [error, setError] = useState(null);
-  const [uploadingInProgress, setUploadingInProgress] = useState(false)
-
+  const [error, setError] = useState<string | null>(null);
+  const [uploadingInProgress, setUploadingInProgress] = useState(false);
 
   const RouteToStudioVisualizer = () => {
-    router.push('/studio/visualizer');
-  }
+    router.push("/studio/visualizer");
+  };
 
   const handleFile = async (file: File) => {
     // Handle file upload logic here
@@ -34,26 +32,26 @@ export default function StudioShell() {
       const preparedUploadFile = await prepareUpload(file);
       saveScene({
         kind: "upload",
-        ...preparedUploadFile
+        ...preparedUploadFile,
       });
-      RouteToStudioVisualizer()
+      RouteToStudioVisualizer();
     } catch (err) {
       setError(
         err instanceof UploadError
           ? err.message
-          : "That photo could not be opened. Try a different one"
+          : "That photo could not be opened. Try a different one",
       );
-      setUploadingInProgress(false)
+      setUploadingInProgress(false);
     }
-  }
+  };
 
   const handleMobilePhoto = () => {
     // Handle file upload From Mobile logic here
-  }
+  };
 
   const pickDemo = (id) => {
     // Handle picking a demo scene logic here
-  }
+  };
 
   return (
     <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
@@ -113,10 +111,10 @@ export default function StudioShell() {
 
         <p className="max-w-md text-sm text-muted-foreground">
           Every blend is rendered onto the photo in perspective, using the light
-          and shadows already in the shot — so what you see is close to what gets
-          laid.
+          and shadows already in the shot — so what you see is close to what
+          gets laid.
         </p>
       </section>
     </div>
-  )
+  );
 }

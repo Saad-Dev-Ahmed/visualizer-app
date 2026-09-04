@@ -1,5 +1,5 @@
 import { Brand } from '@/components/brand'
-import StudioShell from '@/components/studio/StudioShell'
+import StudioImagePicker from '@/components/studio/studio-image-picker'
 
 
 export default function page() {
@@ -15,7 +15,7 @@ export default function page() {
             </header>
 
             <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-10 lg:py-14">
-                <StudioShell />
+                <StudioImagePicker />
             </main>
         </div>
     )

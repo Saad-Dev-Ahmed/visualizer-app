@@ -1,9 +1,10 @@
+import StudioShell from '@/components/studio/studio-shell'
 import React from 'react'
 
 export default function page() {
-  return (
-    <div>
-      Studio inner-page visualizer
-    </div>
-  )
+    return (
+        <div>
+            <StudioShell />
+        </div>
+    )
 }
